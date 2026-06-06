@@ -115,17 +115,12 @@ try:
 
     mode = route_query(query, pdf_uploaded)
 
-    # ==================================
-    # WEB SEARCH MODE
-    # ==================================
     if mode == "web":
 
         try:
             web_results = search_web(query)
 
-            context = "\n".join(
-                [r.get("body", "") for r in web_results]
-            )
+            context = "\n".join([r.get("body", "") for r in web_results])
 
             prompt = f"""
 Use the search results below to answer.
@@ -138,19 +133,48 @@ Question:
 """
 
             answer = generate_response(prompt)
-
             answer = "🌐 WEB SEARCH MODE\n\n" + answer
 
         except Exception:
-
             answer = generate_response(query)
+            answer = "⚠️ Web Search Failed\n\n" + answer
 
-            answer = (
-                "⚠️ Web Search Failed\n\n"
-                "Using LLM Knowledge Instead\n\n"
-                + answer
-            )
 
+    elif mode == "rag":
+
+        try:
+            context = retrieve_documents(query)
+
+            prompt = f"""
+Answer ONLY using the PDF context.
+
+Context:
+{context}
+
+Question:
+{query}
+"""
+
+            answer = generate_response(prompt)
+            answer = "📄 PDF RAG MODE\n\n" + answer
+
+        except Exception:
+            answer = "❌ Could not retrieve information from PDF"
+
+
+    else:
+
+        answer = generate_response(query)
+        answer = "🧠 LLM MODE\n\n" + answer
+
+
+except Exception as e:
+
+    answer = f"""
+❌ SYSTEM ERROR
+
+{str(e)}
+"""
 
     # ==================================
     # PDF RAG MODE
