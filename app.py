@@ -91,24 +91,22 @@ for msg in get_history():
 # -----------------------------
 # USER INPUT
 # -----------------------------
+# -----------------------------
+# USER INPUT
+# -----------------------------
 
-query = st.chat_input(
- "Ask me anything..."
-)
+query = st.chat_input("Ask me anything...")
 
 if query:
 
- add_message("user", query)
+    add_message("user", query)
 
- with st.chat_message("user"):
- st.markdown(query)
+    with st.chat_message("user"):
+        st.markdown(query)
 
- try:
+    try:
 
- mode = route_query(
- query,
- pdf_uploaded
- )
+        mode = route_query(query, pdf_uploaded)
 
  # ==================================
  # WEB SEARCH MODE
