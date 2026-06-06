@@ -1,6 +1,9 @@
 import os
 import streamlit as st
 
+import os
+import streamlit as st
+
 # RAG Files
 from pdf_loader import load_pdf
 from vector_store import create_vector_store
@@ -11,164 +14,207 @@ from rag_tool import retrieve_documents
 
 # Memory
 from memory import (
-    initialize_memory,
-    add_message,
-    get_history
+ initialize_memory,
+ add_message,
+ get_history
 )
 
 # Agent
 from router import route_query
 from graph import generate_response
 
+
 # -----------------------------
 # PAGE CONFIG
 # -----------------------------
+
 st.set_page_config(
-    page_title="Hackathon AI Agent",
-    page_icon="🤖",
-    layout="wide"
+ page_title="Hackathon AI Agent",
+ page_icon="🤖",
+ layout="wide"
 )
 
 initialize_memory()
 
 st.title("🤖 Intelligent Multi-Mode Conversational AI Agent")
 
-# -----------------------------
-# SIDEBAR - PDF UPLOAD
-# -----------------------------
 st.sidebar.header("📄 Upload Document")
 
+# -----------------------------
+# PDF UPLOAD
+# -----------------------------
+
 uploaded_file = st.sidebar.file_uploader(
-    "Upload a PDF",
-    type=["pdf"]
+ "Upload a PDF",
+ type=["pdf"]
 )
 
 pdf_uploaded = False
 
 if uploaded_file:
 
-    try:
-        pdf_uploaded = True
+ try:
 
-        os.makedirs("uploads", exist_ok=True)
+ pdf_uploaded = True
 
-        save_path = os.path.join(
-            "uploads",
-            uploaded_file.name
-        )
+ os.makedirs("uploads", exist_ok=True)
 
-        with open(save_path, "wb") as f:
-            f.write(uploaded_file.read())
+ save_path = os.path.join(
+ "uploads",
+ uploaded_file.name
+ )
 
-        text = load_pdf(save_path)
+ with open(save_path, "wb") as f:
+ f.write(uploaded_file.read())
 
-        create_vector_store(text)
+ text = load_pdf(save_path)
 
-        st.sidebar.success("✅ PDF Indexed Successfully")
+ create_vector_store(text)
 
-    except Exception as e:
-        st.sidebar.error(f"PDF Processing Error:\n{str(e)}")
+ st.sidebar.success(
+ "✅ PDF Indexed Successfully"
+ )
+
+ except Exception as e:
+
+ st.sidebar.error(
+ f"PDF Processing Error:\n{str(e)}"
+ )
 
 # -----------------------------
 # DISPLAY CHAT HISTORY
 # -----------------------------
+
 for msg in get_history():
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+
+ with st.chat_message(msg["role"]):
+ st.markdown(msg["content"])
 
 # -----------------------------
 # USER INPUT
 # -----------------------------
-query = st.chat_input("Ask me anything...")
+
+query = st.chat_input(
+ "Ask me anything..."
+)
 
 if query:
 
-    add_message("user", query)
+ add_message("user", query)
 
-    with st.chat_message("user"):
-        st.markdown(query)
+ with st.chat_message("user"):
+ st.markdown(query)
 
-    try:
+ try:
 
-        mode = route_query(query, pdf_uploaded)
+ mode = route_query(
+ query,
+ pdf_uploaded
+ )
 
-        # ==================================
-        # WEB SEARCH MODE
-        # ==================================
-        if mode == "web":
+ # ==================================
+ # WEB SEARCH MODE
+ # ==================================
 
-            try:
-                web_results = search_web(query)
+ if mode == "web":
 
-                context = "\n".join(
-                    [r.get("body", "") for r in web_results]
-                )
+ try:
 
-                prompt = f"""
-Use the search results below to answer.
+ web_results = search_web(query)
 
-Search Results:
-{context}
+ context = "\n".join(
+ [
+ r.get("body", "")
+ for r in web_results
+ ]
+ )
 
-Question:
-{query}
-"""
+ prompt = f"""
+ Use the search results below to answer.
 
-                answer = generate_response(prompt)
-                answer = "🌐 WEB SEARCH MODE\n\n" + answer
+ Search Results:
+ {context}
 
-            except Exception:
-                answer = generate_response(query)
-                answer = (
-                    "⚠️ Web Search Failed\n\n"
-                    "Using LLM Knowledge Instead\n\n"
-                    + answer
-                )
+ Question:
+ {query}
+ """
 
-        # ==================================
-        # PDF RAG MODE
-        # ==================================
-        elif mode == "rag":
+ answer = generate_response(prompt)
 
-            try:
-                context = retrieve_documents(query)
+ answer = (
+ "🌐 WEB SEARCH MODE\n\n"
+ + answer
+ )
 
-                prompt = f"""
-Answer ONLY using the PDF context.
+ except Exception:
 
-Context:
-{context}
+ answer = generate_response(query)
 
-Question:
-{query}
-"""
+ answer = (
+ "⚠️ Web Search Failed\n\n"
+ "Using LLM Knowledge Instead\n\n"
+ + answer
+ )
 
-                answer = generate_response(prompt)
-                answer = "📄 PDF RAG MODE\n\n" + answer
+ # ==================================
+ # PDF RAG MODE
+ # ==================================
 
-            except Exception:
-                answer = (
-                    "❌ Could not retrieve information "
-                    "from the uploaded PDF."
-                )
+ elif mode == "rag":
 
-        # ==================================
-        # LLM MODE
-        # ==================================
-        else:
+ try:
 
-            answer = generate_response(query)
-            answer = "🧠 LLM MODE\n\n" + answer
+ context = retrieve_documents(query)
 
-    except Exception as e:
+ prompt = f"""
+ Answer ONLY using the PDF context.
 
-        answer = f"""
+ Context:
+ {context}
+
+ Question:
+ {query}
+ """
+
+ answer = generate_response(prompt)
+
+ answer = (
+ "📄 PDF RAG MODE\n\n"
+ + answer
+ )
+
+ except Exception:
+
+ answer = (
+ "❌ Could not retrieve information "
+ "from the uploaded PDF."
+ )
+
+ # ==================================
+ # LLM MODE
+ # ==================================
+
+ else:
+
+ answer = generate_response(query)
+
+ answer = (
+ "🧠 LLM MODE\n\n"
+ + answer
+ )
+
+ except Exception as e:
+
+ answer = f"""
 ❌ SYSTEM ERROR
 
 {str(e)}
 """
 
-    add_message("assistant", answer)
+ add_message(
+ "assistant",
+ answer
+ )
 
-    with st.chat_message("assistant"):
-        st.markdown(answer)
+ with st.chat_message("assistant"):
+ st.markdown(answer)
