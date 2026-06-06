@@ -1,4 +1,4 @@
-from rag.vector_store import load_vector_store
+from vector_store import load_vector_store
 
 
 def retrieve_documents(query):
