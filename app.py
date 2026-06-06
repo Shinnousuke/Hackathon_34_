@@ -43,44 +43,40 @@ st.sidebar.header("📄 Upload Document")
 # -----------------------------
 # PDF UPLOAD
 # -----------------------------
+# -----------------------------
+# PDF UPLOAD
+# -----------------------------
 
 uploaded_file = st.sidebar.file_uploader(
- "Upload a PDF",
- type=["pdf"]
+    "Upload a PDF",
+    type=["pdf"]
 )
 
 pdf_uploaded = False
 
 if uploaded_file:
 
- try:
+    try:
+        pdf_uploaded = True
 
- pdf_uploaded = True
+        os.makedirs("uploads", exist_ok=True)
 
- os.makedirs("uploads", exist_ok=True)
+        save_path = os.path.join(
+            "uploads",
+            uploaded_file.name
+        )
 
- save_path = os.path.join(
- "uploads",
- uploaded_file.name
- )
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.read())
 
- with open(save_path, "wb") as f:
- f.write(uploaded_file.read())
+        text = load_pdf(save_path)
 
- text = load_pdf(save_path)
+        create_vector_store(text)
 
- create_vector_store(text)
+        st.sidebar.success("✅ PDF Indexed Successfully")
 
- st.sidebar.success(
- "✅ PDF Indexed Successfully"
- )
-
- except Exception as e:
-
- st.sidebar.error(
- f"PDF Processing Error:\n{str(e)}"
- )
-
+    except Exception as e:
+        st.sidebar.error(f"PDF Processing Error:\n{str(e)}")
 # -----------------------------
 # DISPLAY CHAT HISTORY
 # -----------------------------
