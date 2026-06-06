@@ -80,11 +80,13 @@ if uploaded_file:
 # -----------------------------
 # DISPLAY CHAT HISTORY
 # -----------------------------
+# -----------------------------
+# DISPLAY CHAT HISTORY
+# -----------------------------
 
 for msg in get_history():
-
- with st.chat_message(msg["role"]):
- st.markdown(msg["content"])
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
 # -----------------------------
 # USER INPUT
